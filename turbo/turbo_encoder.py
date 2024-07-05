@@ -19,12 +19,15 @@ class TurboEncoder:
 
     def interleave(self, vector):
         interleaved = np.zeros(self.block_size, dtype=int)
-        for i in range(0, self.block_size):
+        for i in range(self.block_size):
             interleaved[i] = vector[self.interleaver[i]]
 
         return interleaved
 
     def execute(self, vector):
+        # 考虑了尾比特：
+        # 1. 清空寄存器状态：在编码结束时，通过生成尾比特，确保编码器的寄存器状态返回到初始状态（全零状态）。
+        # 2. 确保连续性：在处理连续的数据块时，清空寄存器状态可以避免状态传播导致的错误累积。
         output_size = 3 * (len(vector) + len(self.encoders[0].registers))
         output = np.zeros(output_size, dtype=int)
         interleaved = self.interleave(vector)

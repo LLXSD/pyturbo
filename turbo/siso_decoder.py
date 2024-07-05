@@ -1,5 +1,7 @@
 #
 # Soft Input Soft Output (SISO) Decoder
+# SISO 解码器通常使用 Viterbi 算法来实现。
+# Viterbi 算法是一种动态规划算法，用于在卷积编码解码过程中，根据接收信号的硬或软信息，寻找最有可能的发送序列。
 #
 
 import math
@@ -12,18 +14,18 @@ from .trellis import Trellis
 class SISODecoder:
     @staticmethod
     def init_branch_metrics(m, n, depth):
-        return np.array(depth * [m * [n * [0.0]]])
+        return np.array(depth * [m * [n * [0.0]]]) # 分支度量矩阵 [depth, m, n]
 
     @staticmethod
     def init_path_metric(m, depth):
-        matrix = np.array(depth * [m * [-math.inf]])
+        matrix = np.array(depth * [m * [-math.inf]]) # 路径度量矩阵 [depth, m] 记录了每个时间步每个状态的最优路径度量
         matrix[:, 0] = 0
         return matrix
 
     @staticmethod
     def demultiplex(vector):
         result = list(zip(vector[0::3], vector[1::3], vector[2::3]))
-        return [(x, y, 0.0) for x, y, _ in result]
+        return [(x, y, 0.0) for x, y, _ in result] # 只返回第一个的原因是解码器通常只需要处理前一个编码器生成的校验比特流，而不需要同时处理两个校验比特流
 
     def __init__(self, block_size):
         self.trellis = Trellis()
@@ -32,7 +34,7 @@ class SISODecoder:
         self.reset()
 
     def reset(self):
-        self.branch_metrics = self.init_branch_metrics(4, 4, self.block_size)
+        self.branch_metrics = self.init_branch_metrics(4, 4, self.block_size) # 状态数通常是4，较小的状态数可以在保证较高编码效率的同时，限制状态转移图的复杂性
 
         self.forward_metrics = self.init_path_metric(4, self.block_size + 1)
         self.backward_metrics = self.init_path_metric(4, self.block_size + 1)
@@ -42,8 +44,8 @@ class SISODecoder:
     def compute_branch(self, tuples):
         for k in range(0, self.block_size):
             for transition in self.trellis.possible_transitions:
-                m, n = transition
-                i, o = self.trellis.transition_to_symbols(m, n)
+                m, n = transition # Turbo 编码中每个卷积编码器的状态之间的转移。在解码器中，这些转移对应于Trellis码本中的状态转移路径
+                i, o = self.trellis.transition_to_symbols(m, n) # 从状态m到状态n的转移时，对应的输入i和输出符号o，可能为+1或-1
 
                 self.branch_metrics[k, m, n] = i * tuples[k][0] + o * tuples[k][1] + i * tuples[k][2]
 
