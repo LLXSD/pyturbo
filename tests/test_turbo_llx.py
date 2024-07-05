@@ -78,7 +78,7 @@ class TestTurboDecoder(unittest.TestCase):
         interleaver = [5, 4, 1, 3, 11, 0, 8, 7, 2, 9, 10, 6]
         interleaver_flip = [5, 6, 1, 3, 11, 0, 8, 7, 2, 9, 10, 6]
         encoder = TurboEncoder(interleaver)
-        decoder = TurboDecoder(interleaver_flip)
+        decoder = TurboDecoder(interleaver)
 
         channel = AWGN(20)
 
