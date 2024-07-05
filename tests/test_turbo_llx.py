@@ -75,14 +75,14 @@ class TestTurboDecoder(unittest.TestCase):
         self.assertListEqual(list(encoded_vector[::3]), decoded_vector)
 
     def test_turbo_decoder(self):
-        interleaver = [0, 1, 10, 9, 8, 2, 4, 7, 6, 11, 3, 5]
-        interleaver_flip = [0, 1, 10, 9, 10, 2, 4, 7, 6, 11, 3, 5]
-        encoder = TurboEncoder(interleaver_flip)
-        decoder = TurboDecoder(interleaver)
+        interleaver = [5, 4, 1, 3, 11, 0, 8, 7, 2, 9, 10, 6]
+        interleaver_flip = [5, 6, 1, 3, 11, 0, 8, 7, 2, 9, 10, 6]
+        encoder = TurboEncoder(interleaver)
+        decoder = TurboDecoder(interleaver_flip)
 
         channel = AWGN(20)
 
-        input_vector = [1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1]
+        input_vector = [0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1]
         encoded_vector = encoder.execute(input_vector)
 
         channel_vector = list(map(float, encoded_vector))

@@ -50,30 +50,30 @@ class SISODecoder:
                 self.branch_metrics[k, m, n] = i * tuples[k][0] + o * tuples[k][1] + i * tuples[k][2]
 
     def compute_forward(self, k, state):
-        past_states = self.trellis.past_states[state]
+        past_states = self.trellis.past_states[state] # 返回在当前状态state下可能的前一状态集合
 
-        forward_metrics = self.forward_metrics[k - 1, past_states]
-        branch_metrics = self.branch_metrics[k - 1, past_states, state]
+        forward_metrics = self.forward_metrics[k - 1, past_states] # 从起始状态到当前时间步 k-1 past_states状态的前向度量
+        branch_metrics = self.branch_metrics[k - 1, past_states, state] # 当前时间步 k-1 到当前状态 state 的分支度量
 
         self.forward_metrics[k, state] = self.trellis.butterfly(forward_metrics, branch_metrics)
 
     def compute_backward(self, k, state):
-        future_states = self.trellis.future_states[state]
+        future_states = self.trellis.future_states[state] # 在当前状态 state 下可能的后一状态集合
 
-        r = self.block_size - k
+        r = self.block_size - k # r 是当前时间步 k 到最后时间步的剩余步数
 
-        backward_metrics = self.backward_metrics[k - 1, future_states]
-        branch_metrics = self.branch_metrics[r, state, future_states]
+        backward_metrics = self.backward_metrics[k - 1, future_states] # 从时间步 k-1 到最后时间步各状态的后向度量
+        branch_metrics = self.branch_metrics[r, state, future_states] # 时间步 r 到当前状态 state 和后一时间步可能状态的分支度量
 
         self.backward_metrics[k, state] = self.trellis.butterfly(backward_metrics, branch_metrics)
 
     def compute_LLR(self, k):
-        r = self.block_size - k - 1
+        r = self.block_size - k - 1 # 计算从当前时间步到结束时间步的剩余步数
 
-        positive = []
-        negative = []
+        positive = [] # 1
+        negative = [] # 0
 
-        for transition in self.trellis.possible_transitions:
+        for transition in self.trellis.possible_transitions: # 遍历所有可能的状态转移
             m, n = transition
             i, _ = self.trellis.transition_to_symbols(m, n)
 
@@ -86,13 +86,13 @@ class SISODecoder:
             else:
                 positive.append(forward_metric + branch_metric + backward_metric)
 
-        self.LLR[k] = np.max(positive) - np.max(negative)
+        self.LLR[k] = np.max(positive) - np.max(negative) # 使用最大度量差来近似对数似然比
 
     def execute(self, tuples):
-        self.compute_branch(tuples)
+        self.compute_branch(tuples) # tuples 是一个包含软信息的元组列表，每个元组包含 (系统比特, 第一个校验比特, 第二个校验比特)，得到所有状态转移路径上的分支度量
 
         for k in range(1, self.block_size + 1):
-            for state in range(0, 4):
+            for state in range(0, 4): # 假设 4 个状态
                 self.compute_forward(k, state)
                 self.compute_backward(k, state)
 
